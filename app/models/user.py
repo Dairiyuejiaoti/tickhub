@@ -9,6 +9,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    token: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
+
 
 
 
