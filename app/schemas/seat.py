@@ -23,3 +23,8 @@ class SeatLockResponse(BaseModel):
     user_id: int
 
     model_config = {"from_attributes": True}
+
+class SeatItemResponse(SeatResponse):
+    is_locked: bool = False
+    locked_by_me: bool = False
+    lock_expire_at: datetime | None = None

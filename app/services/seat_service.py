@@ -2,6 +2,10 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
+
+from app.models.user import User
+from app.schemas.seat import SeatItemResponse
 
 from app.models.seat import Seat
 from app.repositories import seat_repository, show_repository
@@ -34,3 +38,23 @@ async def list_seats(db: AsyncSession, show_id: int) -> list[Seat]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="场次不存在")
 
     return await seat_repository.list_seats(db, show_id)
+async def list_seats_with_status(
+    db: AsyncSession, show_id: int, user: User
+) -> list[SeatItemResponse]:
+    show = await show_repository.get_show(db, show_id)
+    if show is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="场次不存在")
+
+    rows = await seat_repository.list_seats_with_locks(db, show_id, datetime.now())
+    return [
+        SeatItemResponse(
+            id=seat.id,
+            seat_number=seat.seat_number,
+            price=seat.price,
+            status=seat.status,
+            is_locked=lock is not None,
+            locked_by_me=bool(lock and lock.user_id == user.id),
+            lock_expire_at=lock.expire_at if lock else None,
+        )
+        for seat, lock in rows
+    ]

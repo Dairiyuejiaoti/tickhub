@@ -3,6 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.seat import Seat
 
+from datetime import datetime
+
+from sqlalchemy import and_, select
+
+from app.models.seat_lock import SeatLock
+
+
 
 async def count_seats(db: AsyncSession, show_id: int) -> int:
     result = await db.execute(
@@ -25,3 +32,18 @@ async def list_seats(db: AsyncSession, show_id: int) -> list[Seat]:
 
 async def get_seat(db: AsyncSession, seat_id: int) -> Seat | None:
     return await db.get(Seat, seat_id)
+
+async def list_seats_with_locks(
+    db: AsyncSession, show_id: int, now: datetime
+) -> list[tuple[Seat, SeatLock | None]]:
+    stmt = (
+        select(Seat, SeatLock)
+        .outerjoin(
+            SeatLock,
+            and_(SeatLock.seat_id == Seat.id, SeatLock.expire_at > now),
+        )
+        .where(Seat.show_id == show_id)
+        .order_by(Seat.id)
+    )
+    result = await db.execute(stmt)
+    return list(result.all())
