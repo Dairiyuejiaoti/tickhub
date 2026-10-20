@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 
-from app.api.v1 import auth
+from app.api.v1 import auth, show
 
 app = FastAPI(title="TickHub API", version="0.1.0")
 
 app.include_router(auth.router)
+app.include_router(show.router)
 
 
 @app.get("/health")
