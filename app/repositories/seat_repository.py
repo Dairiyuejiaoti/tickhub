@@ -47,3 +47,7 @@ async def list_seats_with_locks(
     )
     result = await db.execute(stmt)
     return list(result.all())
+async def mark_sold(db: AsyncSession, seat: Seat) -> None:
+    seat.status = "sold"      # 不提交，由 service 统一提交
+async def remove_lock(db: AsyncSession, lock: SeatLock) -> None:
+    await db.delete(lock)     # 同样不提交

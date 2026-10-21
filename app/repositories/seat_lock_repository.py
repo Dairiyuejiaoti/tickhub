@@ -29,3 +29,8 @@ async def update_lock(
     await db.commit()
     await db.refresh(lock)
     return lock
+
+
+async def remove_lock(db: AsyncSession, lock: SeatLock) -> None:
+    """删除锁记录。不提交，由 service 与订单、座位状态一起提交。"""
+    await db.delete(lock)
