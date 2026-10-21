@@ -12,6 +12,12 @@ services:                # 要运行的服务列表
     volumes:
       - mysql_data:/var/lib/mysql       # 数据持久化
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 
   redis:
     image: redis:7-alpine          # 官方轻量镜像
@@ -22,6 +28,21 @@ services:                # 要运行的服务列表
     volumes:
       - redis_data:/data           # AOF 持久化文件
     command: redis-server --appendonly yes
+  api:
+    build: .                    # 用当前目录的 Dockerfile 构建
+    container_name: tickhub-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "mysql+aiomysql://root:123456@mysql:3306/tickhub?charset=utf8mb4"
+      REDIS_URL: "redis://redis:6379/0"
+      DEBUG: "false"
+    ports:
+      - "8000:8000"             # 对外暴露，浏览器才能访问
+    depends_on:
+      mysql:
+        condition: service_healthy      # 等 MySQL 真正可用
+      redis:
+        condition: service_started
 
 volumes:
   mysql_data:           # 声明命名卷

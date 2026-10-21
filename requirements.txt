@@ -1,0 +1,8 @@
+fastapi==0.151.0
+uvicorn[standard]==0.54.0
+SQLAlchemy[asyncio]==2.0.55
+aiomysql==0.3.2
+pydantic-settings==2.15.0
+cryptography==50.0.2
+redis==8.1.0
+bcrypt==5.0.0
