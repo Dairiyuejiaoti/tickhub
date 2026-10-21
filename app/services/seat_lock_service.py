@@ -8,11 +8,24 @@ from app.models.seat_lock import SeatLock
 from app.models.user import User
 from app.repositories import seat_lock_repository, seat_repository
 from app.services.seat_service import invalidate_seat_cache
+from app.utils.redis_lock import LockBusy, redis_lock
 
 LOCK_MINUTES = 15
+LOCK_TTL = 5  # 保护"查+插"这几毫秒，5 秒足够，崩溃也能自动释放
 
 
 async def lock_seat(db: AsyncSession, show_id: int, seat_id: int, user: User) -> SeatLock:
+    try:
+        # 锁粒度 = 单个座位：买 A1 的人不会挡住买 B5 的人
+        async with redis_lock(f"seat:lock:{seat_id}", ttl=LOCK_TTL):
+            return await _lock_seat_inner(db, show_id, seat_id, user)
+    except LockBusy:
+        raise HTTPException(status.HTTP_409_CONFLICT, "操作过于频繁，请稍后重试")
+
+
+async def _lock_seat_inner(
+    db: AsyncSession, show_id: int, seat_id: int, user: User
+) -> SeatLock:
     seat = await seat_repository.get_seat(db, seat_id)
     if seat is None or seat.show_id != show_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "座位不存在")
