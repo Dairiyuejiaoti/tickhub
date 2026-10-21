@@ -13,5 +13,16 @@ services:                # 要运行的服务列表
       - mysql_data:/var/lib/mysql       # 数据持久化
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
+  redis:
+    image: redis:7-alpine          # 官方轻量镜像
+    container_name: tickhub-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"                # 宿主机6379 → 容器6379
+    volumes:
+      - redis_data:/data           # AOF 持久化文件
+    command: redis-server --appendonly yes
+
 volumes:
   mysql_data:           # 声明命名卷
+  redis_data:

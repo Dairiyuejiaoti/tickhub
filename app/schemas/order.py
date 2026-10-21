@@ -17,3 +17,5 @@ class OrderResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+class OrderItemResponse(OrderResponse):
+    seat_number: str

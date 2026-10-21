@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import delete
 from app.models.seat_lock import SeatLock
 
 
@@ -34,3 +34,10 @@ async def update_lock(
 async def remove_lock(db: AsyncSession, lock: SeatLock) -> None:
     """删除锁记录。不提交，由 service 与订单、座位状态一起提交。"""
     await db.delete(lock)
+
+
+
+async def delete_expired_locks(db: AsyncSession, now: datetime) -> int:
+    result = await db.execute(delete(SeatLock).where(SeatLock.expire_at < now))
+    await db.commit()
+    return result.rowcount      # 删了几条
